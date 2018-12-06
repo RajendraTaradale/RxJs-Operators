@@ -1,0 +1,109 @@
+import { Component, OnInit } from '@angular/core';
+import { Observable, of, from, Subscriber, Subscription, fromEvent, Subject, forkJoin } from 'rxjs';
+import { map, share, switchMap, tap, count, first, takeUntil, mergeMap, concat, takeLast} from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+
+
+
+@Component({
+  selector: 'app-rxjs-operators',
+  templateUrl: './rxjs-operators.component.html',
+  styleUrls: ['./rxjs-operators.component.scss']
+})
+export class RxjsOperatorsComponent implements OnInit {
+  loading: boolean;
+  Request: Subscription;
+  count:Number=0;
+  startClick = new Subject<void>();
+  constructor(private http: HttpClient) { }
+ 
+
+
+  ngOnInit() {
+    // const eventSource = fromEvent(document, 'click');
+    // eventSource.pipe(takeUntil(this.startClick)).subscribe(() => {
+    //        console.log('clicked ');
+    // });
+
+// const first = of(10);
+// first.flatMap((operand1) => of(operand1 + 10))
+// .subscribe(res => console.log('10 + 10 = ' + res));
+
+    const reqPosts: Observable<any> = this.getPosts();
+    const reqUsers: Observable<any> = this.getUsers();
+    
+    const combinedData = forkJoin(reqPosts, reqUsers);
+    combinedData.subscribe(dt => console.log(dt));
+
+    // const dt: Observable<any> = reqPosts.pipe(
+    //   mergeMap(post=>{
+    //     return reqUsers.pipe(
+    //       map(user=>{
+    //         const allData = {
+    //           rpost:post,
+    //           ruser:user
+    //         };
+    //         return allData;
+    //       })
+    //     )
+    //   })
+    // )
+
+    // dt.subscribe((dt)=>console.log(dt));
+   
+
+    // const reqPostsUser = reqPosts.pipe(
+    //   switchMap(posts => {
+    //     return reqUsers.pipe(tap(users => {
+    //       console.log('Posts List ', posts);
+    //       console.log('User List ', users);
+    //     }));
+    //   })
+    // );
+
+    // reqPostsUser.subscribe();
+
+    //Share() operator
+    // this.setLoading(request);
+    // request.subscribe(data => console.log(data));
+
+    // of operator
+    // const employee = {  
+    //   name: 'Rajendra'  
+    // };  
+    // const obsEmployee: Observable<any>  = of(employee);  
+    // const obsEmployee: Observable<any>  = of('Rajendra Taradale');
+    // obsEmployee
+    // .subscribe((data) => { console.log(data); });
+
+    //Map Operators
+    // const data = of('Rajendra Taradale');
+    // data.pipe(map(x => x.toUpperCase()))
+    // .subscribe((d) => { console.log(d); });
+
+  }
+
+  stopClick() {
+    this.startClick.next();
+    this.startClick.complete();
+  }
+  // setLoading(obs: Observable<any>) {
+  //   this.loading = true;
+  //   obs.subscribe(() => this.loading = false);
+  // }
+
+  getUsers(): Observable<any[]> {
+    return this.http.get<any[]>('https://jsonplaceholder.typicode.com/users');
+  }
+
+  getPosts(): Observable<any[]> {
+    return this.http.get<any[]>('http://jsonplaceholder.typicode.com/posts');
+  }
+
+  CallSErvice() {
+    if (this.Request != null && !this.Request.closed) {
+      this.Request.unsubscribe();
+    }
+    this.Request = this.getUsers().subscribe();
+  }
+}
